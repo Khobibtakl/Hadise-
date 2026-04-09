@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-
+    
     steps:
       - uses: actions/checkout@v4
 
@@ -65,10 +65,10 @@ jobs:
 
           # Add permissions safely
           sed -i '/<manifest/a\
-    <uses-permission android:name="android.permission.INTERNET"/>\
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>\
-    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/>\
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>\
+          <uses-permission android:name="android.permission.INTERNET"/>\
+          <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>\
+          <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/>\
+          <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>\
           ' AndroidManifest.xml
 
           # Enable cleartext safely
@@ -113,3 +113,4 @@ jobs:
         with:
           name: Asmaul-Husna-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
+          
