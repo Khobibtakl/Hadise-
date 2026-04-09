@@ -1,0 +1,133 @@
+name: Smart APK Builder
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v3
+
+    # -------------------------
+    # ☕ Java Setup
+    # -------------------------
+    - name: ☕ Setup Java
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    # -------------------------
+    # 🤖 Android SDK
+    # -------------------------
+    - name: 🤖 Setup Android SDK
+      uses: android-actions/setup-android@v3
+
+    # -------------------------
+    # 🔍 Detect Project Type
+    # -------------------------
+    - name: 🔍 Detect Project Type
+      id: detect
+      run: |
+        if [ -f "android/app/build.gradle" ]; then
+          echo "type=flutter" >> $GITHUB_OUTPUT
+        elif [ -f "app/build.gradle" ]; then
+          echo "type=android" >> $GITHUB_OUTPUT
+        elif [ -f "package.json" ] && grep -q "react-native" package.json; then
+          echo "type=react-native" >> $GITHUB_OUTPUT
+        elif [ -f "config.xml" ]; then
+          echo "type=cordova" >> $GITHUB_OUTPUT
+        else
+          echo "type=unknown" >> $GITHUB_OUTPUT
+        fi
+
+    # -------------------------
+    # 🐦 Flutter Setup
+    # -------------------------
+    - name: 🐦 Setup Flutter
+      if: steps.detect.outputs.type == 'flutter'
+      uses: subosito/flutter-action@v2
+
+    - name: 📦 Flutter Dependencies
+      if: steps.detect.outputs.type == 'flutter'
+      run: flutter pub get
+
+    - name: 🏗️ Build Flutter APK
+      if: steps.detect.outputs.type == 'flutter'
+      run: flutter build apk --release
+
+    # -------------------------
+    # 🤖 Native Android Build
+    # -------------------------
+    - name: 🔧 Grant Permission
+      if: steps.detect.outputs.type == 'android'
+      run: chmod +x ./gradlew
+
+    - name: 🏗️ Build Android APK
+      if: steps.detect.outputs.type == 'android'
+      run: ./gradlew assembleDebug
+
+    # -------------------------
+    # ⚛️ React Native Build
+    # -------------------------
+    - name: 📦 Install Node
+      if: steps.detect.outputs.type == 'react-native'
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+
+    - name: 📦 Install Dependencies
+      if: steps.detect.outputs.type == 'react-native'
+      run: npm install
+
+    - name: 🏗️ Build React Native APK
+      if: steps.detect.outputs.type == 'react-native'
+      run: |
+        cd android
+        chmod +x gradlew
+        ./gradlew assembleDebug
+
+    # -------------------------
+    # 🌐 Cordova Build
+    # -------------------------
+    - name: 📦 Install Node (Cordova)
+      if: steps.detect.outputs.type == 'cordova'
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+
+    - name: 📦 Install Cordova
+      if: steps.detect.outputs.type == 'cordova'
+      run: npm install -g cordova
+
+    - name: 📦 Install Dependencies
+      if: steps.detect.outputs.type == 'cordova'
+      run: npm install
+
+    - name: 🏗️ Build Cordova APK
+      if: steps.detect.outputs.type == 'cordova'
+      run: cordova build android
+
+    # -------------------------
+    # ❌ Unknown Project
+    # -------------------------
+    - name: ❌ Unsupported Project
+      if: steps.detect.outputs.type == 'unknown'
+      run: |
+        echo "❌ Unsupported project type"
+        exit 1
+
+    # -------------------------
+    # 📤 Upload APK
+    # -------------------------
+    - name: 📤 Upload APK
+      uses: actions/upload-artifact@v3
+      with:
+        name: apk-file
+        path: |
+          **/*.apk
