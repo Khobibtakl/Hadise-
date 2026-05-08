@@ -1,82 +1,63 @@
-import React from 'react';
-import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Heart, Calendar, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useTheme } from '../context/ThemeContext';
-import { useAppContext } from '../context/AppContext';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+import { Outlet, NavLink } from 'react-router-dom';
+import { Home, Heart, Calendar, Settings } from 'lucide-react';
+import { cn } from '../lib/utils';
+import { motion } from 'framer-motion';
 
 export function Layout() {
-  const { theme } = useTheme();
-  const { t, language } = useAppContext();
-  const location = useLocation();
-  const navigate = useNavigate();
-
-  const isHome = location.pathname === '/';
-  
-  const getPageTitle = () => {
-    if (location.pathname.startsWith('/hadith/')) return t('hadithDetails');
-    switch (location.pathname) {
-      case '/': return t('welcomeTitle');
-      case '/favorites': return t('favorites');
-      case '/daily': return t('dailyHadith');
-      case '/settings': return t('settings');
-      default: return t('welcomeTitle');
-    }
-  };
+  const navItems = [
+    { to: '/', icon: Home, label: 'کور' },
+    { to: '/daily', icon: Calendar, label: 'د نن حديث' },
+    { to: '/favorites', icon: Heart, label: 'خوښ شوي' },
+    { to: '/settings', icon: Settings, label: 'تنظيمات' },
+  ];
 
   return (
-    <div className={cn(
-      "flex flex-col h-[100dvh] w-full max-w-md mx-auto overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-50 transition-colors duration-300",
-      "shadow-2xl sm:border-x sm:border-slate-200 dark:sm:border-slate-800"
-    )}>
-      {/* Top App Bar */}
-      <header className="flex-shrink-0 flex items-center h-16 px-4 bg-primary-600 dark:bg-primary-900 text-white shadow-md z-10">
-        {!isHome && (
-          <button 
-            onClick={() => navigate(-1)}
-            className="p-2 -ms-2 me-2 rounded-full hover:bg-white/10 transition-colors"
-            aria-label={t('goBack')}
-          >
-            {language === 'en' ? <ChevronLeft size={24} /> : <ChevronRight size={24} />}
-          </button>
-        )}
-        <h1 className="text-xl font-semibold tracking-tight">{getPageTitle()}</h1>
-      </header>
-
+    <div className="flex flex-col h-screen bg-slate-50 md:flex-row-reverse max-w-md mx-auto md:max-w-2xl relative shadow-2xl overflow-hidden">
+      
       {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto overflow-x-hidden relative">
-        <Outlet />
+      <main className="flex-1 overflow-y-auto pb-20 md:pb-0 z-10 w-full relative">
+        <motion.div
+           initial={{ opacity: 0, y: 10 }}
+           animate={{ opacity: 1, y: 0 }}
+           exit={{ opacity: 0, y: -10 }}
+           transition={{ duration: 0.3 }}
+           className="min-h-full"
+        >
+          <Outlet />
+        </motion.div>
       </main>
 
-      {/* Bottom Navigation */}
-      <nav className="flex-shrink-0 flex justify-around items-center h-16 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 pb-safe">
-        <NavItem to="/" icon={<Home size={24} />} label={t('home')} />
-        <NavItem to="/daily" icon={<Calendar size={24} />} label={t('daily')} />
-        <NavItem to="/favorites" icon={<Heart size={24} />} label={t('favorites')} />
-        <NavItem to="/settings" icon={<Settings size={24} />} label={t('settings')} />
+      {/* Bottom Navigation for Mobile, Side for Desktop */}
+      <nav className="fixed bottom-0 w-full max-w-md mx-auto md:max-w-none md:static md:w-24 bg-white border-t border-slate-200 md:border-t-0 md:border-l z-20 pb-safe shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] md:shadow-none">
+        <div className="flex justify-around items-center h-16 md:h-full md:flex-col md:py-8 md:justify-start md:gap-8 px-2">
+          {navItems.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              className={({ isActive }) =>
+                cn(
+                  "flex flex-col items-center justify-center w-full h-full gap-1 transition-colors relative",
+                  isActive ? "text-emerald-600" : "text-slate-400 hover:text-slate-600"
+                )
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  <item.icon className={cn("w-5 h-5", isActive && "fill-emerald-100/50")} />
+                  <span className="text-[10px] font-medium">{item.label}</span>
+                  {isActive && (
+                    <motion.div 
+                      layoutId="nav-indicator"
+                      className="absolute top-0 w-8 h-1 bg-emerald-500 rounded-b-full md:w-1 md:h-8 md:top-auto md:right-0 md:rounded-l-full md:rounded-b-none"
+                    />
+                  )}
+                </>
+              )}
+            </NavLink>
+          ))}
+        </div>
       </nav>
+      
     </div>
-  );
-}
-
-function NavItem({ to, icon, label }: { to: string; icon: React.ReactNode; label: string }) {
-  return (
-    <NavLink
-      to={to}
-      className={({ isActive }) => cn(
-        "flex flex-col items-center justify-center w-full h-full gap-1 transition-colors",
-        isActive 
-          ? "text-primary-600 dark:text-primary-400" 
-          : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-50"
-      )}
-    >
-      {icon}
-      <span className="text-[10px] font-medium">{label}</span>
-    </NavLink>
   );
 }

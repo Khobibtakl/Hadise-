@@ -1,131 +1,87 @@
-import React, { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
-import { Search, BookOpen, Heart } from 'lucide-react';
+import { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { motion } from 'motion/react';
-import { cn } from '../components/Layout';
+import { HadithCard } from '../components/HadithCard';
+import { Search } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export function Home() {
-  const { hadiths, favorites, readHistory, t, language } = useAppContext();
-  const [searchQuery, setSearchQuery] = useState('');
+  const { hadiths } = useAppContext();
+  const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  const categories = useMemo(() => {
-    const cats = new Set(hadiths.map(h => h.category[language]));
-    return Array.from(cats).sort();
-  }, [hadiths, language]);
+  const categories = Array.from(new Set(hadiths.map(h => h.category)));
 
-  const filteredHadiths = useMemo(() => {
-    return hadiths.filter(h => {
-      const matchesSearch = h.title[language].toLowerCase().includes(searchQuery.toLowerCase()) || 
-                            h.translation[language].toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory = selectedCategory ? h.category[language] === selectedCategory : true;
-      return matchesSearch && matchesCategory;
-    });
-  }, [hadiths, searchQuery, selectedCategory, language]);
+  const filteredHadiths = hadiths.filter(hadith => {
+    const matchesSearch = hadith.arabic.includes(searchTerm) || hadith.pashto.includes(searchTerm);
+    const matchesCategory = selectedCategory ? hadith.category === selectedCategory : true;
+    return matchesSearch && matchesCategory;
+  });
 
   return (
-    <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-950">
-      {/* Header Section */}
-      <div className="bg-primary-600 dark:bg-primary-900 text-white p-6 rounded-b-3xl shadow-lg relative overflow-hidden">
-        <div className="absolute top-0 end-0 opacity-10 transform rtl:-translate-x-1/4 translate-x-1/4 -translate-y-1/4">
-          <BookOpen size={160} />
-        </div>
-        <h2 className="text-2xl font-bold mb-2 relative z-10">{t('welcomeTitle')}</h2>
-        <p className="text-primary-100 text-sm mb-6 relative z-10">
-          {t('welcomeDesc')}
-        </p>
+    <div className="flex flex-col min-h-full">
+      {/* Header */}
+      <div className="bg-emerald-600 px-6 py-8 text-white rounded-b-3xl shadow-md z-10 sticky top-0">
+        <h1 className="text-2xl font-bold mb-2">حديثونه</h1>
+        <p className="text-emerald-100 text-sm opacity-90 mb-6 font-medium">نبوي احاديث په پښتو ژباړه</p>
         
-        {/* Search Bar */}
-        <div className="relative z-10">
-          <div className="absolute inset-y-0 start-0 ps-3 flex items-center pointer-events-none">
-            <Search className="h-5 w-5 text-primary-300" />
-          </div>
+        {/* Search */}
+        <div className="relative">
           <input
             type="text"
-            className="block w-full ps-10 pe-3 py-3 border-none rounded-xl bg-white/20 backdrop-blur-md text-white placeholder-primary-200 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all"
-            placeholder={t('searchPlaceholder')}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="لټون (عربي يا پښتو)..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full bg-white/10 border border-white/20 text-white placeholder:text-white/60 rounded-xl py-3 px-4 pr-11 focus:outline-none focus:ring-2 focus:ring-white/30 transition-all font-pashto"
+            dir="rtl"
           />
-        </div>
-      </div>
-
-      {/* Progress & Stats */}
-      <div className="px-4 py-4 flex justify-between items-center text-sm text-slate-500 dark:text-slate-400">
-        <div className="flex items-center gap-1">
-          <BookOpen size={16} className="text-primary-500" />
-          <span>{readHistory.length} / {hadiths.length} {t('read')}</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <Heart size={16} className="text-rose-500" />
-          <span>{favorites.length} {t('saved')}</span>
+          <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/60" />
         </div>
       </div>
 
       {/* Categories */}
-      <div className="px-4 pb-4 overflow-x-auto no-scrollbar flex gap-2">
+      <div className="px-4 py-5 overflow-x-auto hide-scrollbar flex gap-2">
         <button
           onClick={() => setSelectedCategory(null)}
-          className={cn(
-            "px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors",
+          className={`shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
             selectedCategory === null 
-              ? "bg-primary-100 text-primary-800 dark:bg-primary-900/50 dark:text-primary-300" 
-              : "bg-white text-slate-600 border border-slate-200 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-400"
-          )}
+              ? 'bg-slate-800 text-white shadow-sm' 
+              : 'bg-white text-slate-600 border border-slate-200 shadow-sm'
+          }`}
         >
-          {t('all')}
+          ټول
         </button>
-        {categories.map(cat => (
+        {categories.map(category => (
           <button
-            key={cat}
-            onClick={() => setSelectedCategory(cat)}
-            className={cn(
-              "px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors",
-              selectedCategory === cat 
-                ? "bg-primary-100 text-primary-800 dark:bg-primary-900/50 dark:text-primary-300" 
-                : "bg-white text-slate-600 border border-slate-200 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-400"
-            )}
+            key={category}
+            onClick={() => setSelectedCategory(category)}
+            className={`shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+              selectedCategory === category 
+                ? 'bg-slate-800 text-white shadow-sm' 
+                : 'bg-white text-slate-600 border border-slate-200 shadow-sm'
+            }`}
           >
-            {cat}
+            {category}
           </button>
         ))}
       </div>
 
-      {/* Hadith List */}
-      <div className="flex-1 overflow-y-auto px-4 pb-24 flex flex-col gap-4">
-        {filteredHadiths.length === 0 ? (
-          <div className="text-center py-10 text-slate-500 dark:text-slate-400">
-            {t('noHadithsFound')}
-          </div>
-        ) : (
-          filteredHadiths.map((hadith, index) => (
+      {/* List */}
+      <div className="px-4 pb-8 flex flex-col gap-4">
+        <AnimatePresence mode="popLayout">
+          {filteredHadiths.map(hadith => (
+            <HadithCard key={hadith.id} hadith={hadith} />
+          ))}
+          {filteredHadiths.length === 0 && (
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-              key={hadith.id}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="text-center py-12 text-slate-400"
             >
-              <Link 
-                to={`/hadith/${hadith.id}`}
-                className="block bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-sm border border-slate-100 dark:border-slate-800 hover:shadow-md transition-shadow"
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30 px-2 py-1 rounded-md">
-                    {hadith.category[language]}
-                  </span>
-                  <span className="text-xs text-slate-400">#{hadith.id}</span>
-                </div>
-                <h3 className="font-semibold text-lg text-slate-900 dark:text-slate-100 mb-2">
-                  {hadith.title[language]}
-                </h3>
-                <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
-                  {hadith.translation[language]}
-                </p>
-              </Link>
+              پدې نوم څه ونه موندل شول.
             </motion.div>
-          ))
-        )}
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

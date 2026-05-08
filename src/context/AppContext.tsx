@@ -1,128 +1,139 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { Hadith } from '../types';
 import hadithsData from '../data/hadiths.json';
-import { translations } from '../i18n/translations';
-
-export type Language = 'en' | 'ps' | 'fa';
-
-export interface LocalizedString {
-  en: string;
-  ps: string;
-  fa: string;
-}
-
-export interface Hadith {
-  id: number;
-  title: LocalizedString;
-  category: LocalizedString;
-  arabic: string;
-  translation: LocalizedString;
-  explanation: LocalizedString;
-  reference: LocalizedString;
-  source: string;
-}
+import { LocalNotifications } from '@capacitor/local-notifications';
 
 interface AppContextType {
+  favorites: string[];
+  toggleFavorite: (id: string) => void;
+  isFavorite: (id: string) => boolean;
   hadiths: Hadith[];
-  favorites: number[];
-  toggleFavorite: (id: number) => void;
-  isFavorite: (id: number) => boolean;
-  readHistory: number[];
-  markAsRead: (id: number) => void;
   dailyHadith: Hadith | null;
-  language: Language;
-  setLanguage: (lang: Language) => void;
-  t: (key: keyof typeof translations['en']) => string;
+  notificationsEnabled: boolean;
+  toggleNotifications: () => void;
+  isDarkMode: boolean;
+  toggleDarkMode: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [language, setLanguage] = useState<Language>(() => {
-    const saved = localStorage.getItem('language');
-    return (saved as Language) || 'en';
-  });
-
-  const [hadiths] = useState<Hadith[]>(hadithsData as Hadith[]);
-  const [favorites, setFavorites] = useState<number[]>(() => {
-    const saved = localStorage.getItem('favorites');
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [readHistory, setReadHistory] = useState<number[]>(() => {
-    const saved = localStorage.getItem('readHistory');
-    return saved ? JSON.parse(saved) : [];
-  });
+export function AppProvider({ children }: { children: ReactNode }) {
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [hadiths] = useState<Hadith[]>(hadithsData);
   const [dailyHadith, setDailyHadith] = useState<Hadith | null>(null);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
-    localStorage.setItem('language', language);
-    document.documentElement.dir = language === 'en' ? 'ltr' : 'rtl';
-    document.documentElement.lang = language;
-  }, [language]);
-
-  useEffect(() => {
-    localStorage.setItem('favorites', JSON.stringify(favorites));
-  }, [favorites]);
-
-  useEffect(() => {
-    localStorage.setItem('readHistory', JSON.stringify(readHistory));
-  }, [readHistory]);
-
-  useEffect(() => {
-    // Daily Hadith Logic
-    const today = new Date().toISOString().split('T')[0];
-    const savedDailyStr = localStorage.getItem('dailyHadith');
-    
-    if (savedDailyStr) {
-      const savedDaily = JSON.parse(savedDailyStr);
-      if (savedDaily.date === today) {
-        const hadith = hadiths.find(h => h.id === savedDaily.id);
-        if (hadith) {
-          setDailyHadith(hadith);
-          return;
-        }
+    // Load favorites from local storage
+    const storedFavorites = localStorage.getItem('hadith_favorites');
+    if (storedFavorites) {
+      try {
+        setFavorites(JSON.parse(storedFavorites));
+      } catch (e) {
+        console.error('Failed to parse favorites', e);
       }
     }
 
-    // Generate new daily hadith
-    const randomIndex = Math.floor(Math.random() * hadiths.length);
-    const newDaily = hadiths[randomIndex];
-    setDailyHadith(newDaily);
-    localStorage.setItem('dailyHadith', JSON.stringify({ date: today, id: newDaily.id }));
-  }, [hadiths]);
+    const storedTheme = localStorage.getItem('hadith_theme');
+    if (storedTheme === 'dark') {
+      setIsDarkMode(true);
+      document.documentElement.classList.add('dark');
+    }
 
-  const toggleFavorite = (id: number) => {
-    setFavorites(prev => 
-      prev.includes(id) ? prev.filter(favId => favId !== id) : [...prev, id]
-    );
-  };
+    const storedNotifs = localStorage.getItem('hadith_notifications');
+    if (storedNotifs === 'true') {
+      setNotificationsEnabled(true);
+    }
 
-  const isFavorite = (id: number) => favorites.includes(id);
+    // Set a daily hadith based on the current day
+    const today = new Date();
+    const dayOfYear = Math.floor((today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) / 1000 / 60 / 60 / 24);
+    const index = dayOfYear % hadithsData.length;
+    setDailyHadith(hadithsData[index]);
+  }, []);
 
-  const markAsRead = (id: number) => {
-    setReadHistory(prev => {
-      if (!prev.includes(id)) {
-        return [...prev, id];
-      }
-      return prev;
+  const toggleFavorite = (id: string) => {
+    setFavorites(prev => {
+      const newFavorites = prev.includes(id) 
+        ? prev.filter(f => f !== id)
+        : [...prev, id];
+      
+      localStorage.setItem('hadith_favorites', JSON.stringify(newFavorites));
+      return newFavorites;
     });
   };
 
-  const t = (key: keyof typeof translations['en']) => {
-    return translations[language][key] || translations['en'][key];
+  const isFavorite = (id: string) => favorites.includes(id);
+
+  const toggleDarkMode = () => {
+    setIsDarkMode(prev => {
+      const newValue = !prev;
+      if (newValue) {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('hadith_theme', 'dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('hadith_theme', 'light');
+      }
+      return newValue;
+    });
+  };
+
+  const toggleNotifications = async () => {
+    try {
+      if (!notificationsEnabled) {
+        // Request permission
+        const permStatus = await LocalNotifications.requestPermissions();
+        if (permStatus.display === 'granted') {
+          // Schedule daily notification at 8:00 AM
+          await LocalNotifications.schedule({
+            notifications: [
+              {
+                title: 'د نن حديثونه',
+                body: dailyHadith?.pashto || 'نن یو نوی حدیث ولولئ او ثواب وګټئ!',
+                id: 1,
+                schedule: {
+                  on: {
+                    hour: 8,
+                    minute: 0,
+                  },
+                  repeats: true,
+                },
+                smallIcon: 'ic_stat_icon',
+              }
+            ]
+          });
+          setNotificationsEnabled(true);
+          localStorage.setItem('hadith_notifications', 'true');
+        } else {
+          alert('لطفاً د خبرتیا اجازه ورکړئ.');
+        }
+      } else {
+        // Cancel notifications
+        await LocalNotifications.cancel({ notifications: [{ id: 1 }] });
+        setNotificationsEnabled(false);
+        localStorage.setItem('hadith_notifications', 'false');
+      }
+    } catch (e) {
+      console.error('Failed to toggle notifications', e);
+      // Fallback for web or if capacitor fails
+      setNotificationsEnabled(!notificationsEnabled);
+      localStorage.setItem('hadith_notifications', (!notificationsEnabled).toString());
+    }
   };
 
   return (
-    <AppContext.Provider value={{
-      hadiths,
-      favorites,
-      toggleFavorite,
-      isFavorite,
-      readHistory,
-      markAsRead,
+    <AppContext.Provider value={{ 
+      favorites, 
+      toggleFavorite, 
+      isFavorite, 
+      hadiths, 
       dailyHadith,
-      language,
-      setLanguage,
-      t
+      notificationsEnabled,
+      toggleNotifications,
+      isDarkMode,
+      toggleDarkMode
     }}>
       {children}
     </AppContext.Provider>
