@@ -6,15 +6,18 @@ export function Daily() {
 
   return (
     <div className="flex flex-col min-h-full">
-      <div className="bg-emerald-600 px-6 py-6 text-white rounded-b-3xl shadow-md z-10 sticky top-0 flex items-center justify-center">
-        <h1 className="text-xl font-bold">د نن حديث</h1>
+      <div className="bg-primary-600 px-6 pt-[calc(env(safe-area-inset-top,20px)+1.5rem)] pb-24 text-white rounded-b-3xl shadow-md">
+        <h1 className="text-2xl font-bold mb-2 text-center">ورځنی حديث</h1>
+        <p className="text-primary-100 text-center text-sm font-medium">د نن ورځې لپاره ځانګړی حدیث</p>
       </div>
       
-      <div className="flex-1 flex flex-col p-4 justify-center items-center">
+      <div className="px-4 -mt-16 pb-6">
         {dailyHadith ? (
-          <HadithCard hadith={dailyHadith} className="w-full shadow-xl shadow-emerald-900/5 ring-1 ring-emerald-900/5" />
+          <HadithCard hadith={dailyHadith} className="shadow-xl ring-1 ring-black/5" />
         ) : (
-          <div className="text-slate-400">حديث نه دی موندل شوی</div>
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-8 text-center text-slate-500 dark:text-slate-400">
+            حدیث شتون نلري
+          </div>
         )}
       </div>
     </div>

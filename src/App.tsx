@@ -1,5 +1,4 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { AppProvider } from './context/AppContext';
 import { Layout } from './components/Layout';
 import { Home } from './pages/Home';
 import { Daily } from './pages/Daily';
@@ -10,16 +9,14 @@ import { Dialog } from './components/Dialog';
 import { useState, useEffect } from 'react';
 import { App as CapacitorApp } from '@capacitor/app';
 import { LogOut } from 'lucide-react';
+import { AppProvider } from './context/AppContext';
 
-function App() {
+export default function App() {
   const [showSplash, setShowSplash] = useState(true);
   const [showExitDialog, setShowExitDialog] = useState(false);
 
   useEffect(() => {
     const backButtonListener = CapacitorApp.addListener('backButton', ({ canGoBack }) => {
-      // Due to typical React Router setups with capacitor, canGoBack might be true even at root.
-      // Easiest is to check location if we can, but Capacitor handles native back.
-      // For a simple PWA/hybrid app, if they hit hardware back and it bubbles to app level:
       if (window.location.pathname === '/') {
          setShowExitDialog(true);
       } else if (!canGoBack) {
@@ -62,18 +59,18 @@ function App() {
         hideCloseBtn={true}
       >
         <div className="flex flex-col items-center text-center py-2 relative">
-          <div className="w-20 h-20 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mb-6 ring-8 ring-rose-50/50">
+          <div className="w-20 h-20 bg-rose-50 dark:bg-rose-500/10 text-rose-500 rounded-full flex items-center justify-center mb-6 ring-8 ring-rose-50/50 dark:ring-rose-500/5">
             <LogOut className="w-8 h-8 ml-1" />
           </div>
-          <h3 className="text-2xl font-bold text-slate-800 mb-2">له اپلکيشن وتل</h3>
-          <p className="text-slate-500 text-lg leading-relaxed mb-8">
+          <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2">له اپلکيشن وتل</h3>
+          <p className="text-slate-500 dark:text-slate-400 text-lg leading-relaxed mb-8">
             آيا غواړئ چې له اپلکيشن څخه ووځئ؟
           </p>
           
           <div className="flex gap-4 w-full">
             <button 
               onClick={() => setShowExitDialog(false)}
-              className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-3.5 rounded-2xl font-bold transition-all active:scale-[0.98]"
+              className="flex-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 py-3.5 rounded-2xl font-bold transition-all active:scale-[0.98]"
             >
               نه
             </button>
@@ -89,5 +86,3 @@ function App() {
     </AppProvider>
   );
 }
-
-export default App;
