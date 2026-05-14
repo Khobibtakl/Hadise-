@@ -23,8 +23,8 @@ export function Home() {
   }, [hadiths, search, selectedCategory]);
 
   return (
-    <div className="flex flex-col min-h-full">
-      <div className="bg-primary-600 px-6 pt-[calc(env(safe-area-inset-top,20px)+1.5rem)] pb-8 text-white rounded-b-3xl shadow-md z-10 sticky top-0">
+    <div className="flex flex-col min-h-full pb-6">
+      <div className="bg-primary-600 px-6 pt-[calc(env(safe-area-inset-top,20px)+1.5rem)] pb-8 text-white rounded-b-3xl md:rounded-b-[2rem] shadow-md z-10 sticky top-0">
         <h1 className="text-2xl font-bold mb-6 text-center tracking-wide">ټول حديثونه</h1>
         
         <div className="relative">
@@ -69,17 +69,19 @@ export function Home() {
           </div>
         )}
         
-        <div className="flex flex-col gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <AnimatePresence mode="popLayout">
             {filteredHadiths.length > 0 ? (
               filteredHadiths.map((hadith) => (
-                <HadithCard key={hadith.id} hadith={hadith} />
+                <div key={hadith.id} className="w-full">
+                  <HadithCard hadith={hadith} />
+                </div>
               ))
             ) : (
               <motion.div 
                 initial={{ opacity: 0 }} 
                 animate={{ opacity: 1 }} 
-                className="py-12 text-center text-slate-400 font-medium"
+                className="py-12 text-center text-slate-400 font-medium col-span-full"
               >
                 هیڅ حدیث ونه موندل شو!
               </motion.div>

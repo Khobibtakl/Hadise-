@@ -17,17 +17,19 @@ export function Favorites() {
       </div>
 
       <div className="p-4" dir="rtl">
-        <div className="flex flex-col gap-4 mt-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
           <AnimatePresence mode="popLayout">
             {favoriteHadiths.length > 0 ? (
               favoriteHadiths.map((hadith) => (
-                <HadithCard key={hadith.id} hadith={hadith} />
+                <div key={hadith.id} className="w-full">
+                  <HadithCard hadith={hadith} />
+                </div>
               ))
             ) : (
               <motion.div 
                 initial={{ opacity: 0 }} 
                 animate={{ opacity: 1 }} 
-                className="py-16 flex flex-col items-center justify-center text-slate-400 gap-4"
+                className="py-16 flex flex-col items-center justify-center text-slate-400 gap-4 col-span-full"
               >
                 <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-2">
                   <span className="text-2xl">❤️</span>

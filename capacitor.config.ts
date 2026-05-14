@@ -1,7 +1,7 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'khubaibtakl.hadise.af',
+  appId: 'com.hadith.app',
   appName: 'حديثونه',
   webDir: 'dist',
   plugins: {

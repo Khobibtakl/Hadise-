@@ -11,7 +11,7 @@ export function Daily() {
         <p className="text-primary-100 text-center text-sm font-medium">د نن ورځې لپاره ځانګړی حدیث</p>
       </div>
       
-      <div className="px-4 -mt-16 pb-6">
+      <div className="px-4 -mt-16 pb-6 max-w-2xl mx-auto w-full">
         {dailyHadith ? (
           <HadithCard hadith={dailyHadith} className="shadow-xl ring-1 ring-black/5" />
         ) : (

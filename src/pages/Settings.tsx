@@ -17,7 +17,7 @@ export function Settings() {
         <h1 className="text-2xl font-bold">تنظيمات</h1>
       </div>
       
-      <div className="p-4 flex flex-col gap-4">
+      <div className="p-4 flex flex-col gap-4 max-w-2xl mx-auto w-full">
         
         
         <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden mb-4">
